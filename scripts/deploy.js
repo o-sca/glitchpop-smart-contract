@@ -1,30 +1,60 @@
-// We require the Hardhat Runtime Environment explicitly here. This is optional
-// but useful for running the script in a standalone fashion through `node <script>`.
-//
-// When running the script with `npx hardhat run <script>` you'll find the Hardhat
-// Runtime Environment's members available in the global scope.
 const hre = require("hardhat");
+const { sendWebhook } = require('./util.js');
+
+const parseArgs = () => {
+    let arguments = [];
+    require('../arguments.js').forEach(arg => {
+        arguments.push(arg)
+    })
+    return arguments;
+};
+
+const getCurrentGas = async () => {
+    return hre.ethers.utils.formatUnits(
+        await hre.ethers.provider.getGasPrice(),
+        "gwei"
+    )
+};
+
 
 async function main() {
-  // Hardhat always runs the compile task when running scripts with its command
-  // line interface.
-  //
-  // If this script is run directly using `node` you may want to call compile
-  // manually to make sure everything is compiled
-  // await hre.run('compile');
+    const [deployer] = await hre.ethers.getSigners();
 
-  // We get the contract to deploy
-  const Greeter = await hre.ethers.getContractFactory("Greeter");
-  const greeter = await Greeter.deploy("Hello, Hardhat!");
+    console.log("Deploying contracts with the account:", deployer.address);
+    console.log("Account balance:", hre.ethers.utils.formatEther(await deployer.getBalance()).toString(), "ETH");
 
-  await greeter.deployed();
+    const ContractFactory = await hre.ethers.getContractFactory("NFT");    
 
-  console.log("Greeter deployed to:", greeter.address);
+    const contract = await ContractFactory.deploy();
+    
+    await contract.deployed()    
+
+    const gasFees = await hre.ethers.provider.getFeeData();
+    const receipt = await contract.deployTransaction.wait();
+    const gasUsed = receipt.gasUsed.toString();
+
+    const txFee = Number(gasUsed) * (gasFees.maxFeePerGas !== null 
+        ? hre.ethers.utils.formatUnits(gasFees.maxFeePerGas, "gwei")
+        : hre.ethers.utils.formatUnits(gasFees.gasPrice, "ether"));
+
+    let ctx = {
+        contract: contract.deployTransaction.creates,
+        hash: contract.deployTransaction.hash,
+        txFee: txFee.toString(),
+        gasLimit: contract.deployTransaction.gasLimit.toString(),
+        gasUsed: gasUsed,
+        chainId: contract.deployTransaction.chainId,
+    };
+
+    console.log(ctx);
+
+    await sendWebhook(ctx);
 }
 
-// We recommend this pattern to be able to use async/await everywhere
-// and properly handle errors.
-main().catch((error) => {
-  console.error(error);
-  process.exitCode = 1;
+main()
+    .then(() => process.exit(0))
+    .catch((e) => {
+        console.error(e)
+        console.error(e.code);
+        process.exit(1);
 });

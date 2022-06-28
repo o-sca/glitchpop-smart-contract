@@ -42,7 +42,7 @@ contract Glitchpop is ERC721A, Ownable, ReentrancyGuard {
         setMaxPerTx(_maxMintAmountPerTx);
         setMaxPerWallet(_maxPerWallet);
         setMaxSupply(_maxSupply);
-        _safeMint(msg.sender, 1);
+        _mint(msg.sender, 1);
     }
 
     function _baseURI() internal view virtual override returns (string memory) {
@@ -76,7 +76,7 @@ contract Glitchpop is ERC721A, Ownable, ReentrancyGuard {
         mintCompliance(_mintAmount) 
     {
         require(!paused, "The contract is paused!");
-        _safeMint(_msgSender(), _mintAmount);
+        _mint(_msgSender(), _mintAmount);
     }
 
     function tokenURI(uint256 tokenId)
@@ -127,7 +127,7 @@ contract Glitchpop is ERC721A, Ownable, ReentrancyGuard {
         public
         onlyOwner
     {
-        _safeMint(_receiver, _mintAmount);
+        _mint(_receiver, _mintAmount);
     }
 
     function setPrice(uint256 _cost) public onlyOwner {

@@ -1,21 +1,6 @@
 const hre = require("hardhat");
 const { sendWebhook } = require("./util.js");
 
-const parseArgs = () => {
-  let arguments = [];
-  require("../arguments.js").forEach((arg) => {
-    arguments.push(arg);
-  });
-  return arguments;
-};
-
-const getCurrentGas = async () => {
-  return hre.ethers.utils.formatUnits(
-    await hre.ethers.provider.getGasPrice(),
-    "gwei"
-  );
-};
-
 async function main() {
   const [deployer] = await hre.ethers.getSigners();
 
@@ -26,9 +11,19 @@ async function main() {
     "ETH"
   );
 
-  const ContractFactory = await hre.ethers.getContractFactory("NFT");
+  const ContractFactory = await hre.ethers.getContractFactory("Glitchpop");
 
-  const contract = await ContractFactory.deploy();
+  const contract = await ContractFactory.deploy(
+    "ipfs://QmYNRCnQk175QeY1XGesUCYjcZTAHxxvmAo5JGM2FfJaiv/",
+    "Glitchpop",
+    "GP",
+    10000000000000000n,
+    3,
+    500,
+    3,
+    2200,
+    3
+  );
 
   await contract.deployed();
 
